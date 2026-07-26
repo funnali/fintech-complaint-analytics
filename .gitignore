@@ -1,0 +1,28 @@
+# Data files (never commit raw complaint data)
+data/
+*.csv
+*.db
+*.parquet
+
+# Vector store (large binary files)
+vector_store/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
