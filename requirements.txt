@@ -12,3 +12,4 @@ gradio
 jupyter
 tqdm
 python-dotenv
+langchain-text-splitters
