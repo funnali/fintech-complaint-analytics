@@ -4,13 +4,14 @@ matplotlib
 seaborn
 scikit-learn
 sentence-transformers
+transformers
 langchain
 langchain-community
+langchain-text-splitters
 chromadb
 faiss-cpu
 gradio
 jupyter
 tqdm
 python-dotenv
-langchain-text-splitters
-transformers
+pytest
