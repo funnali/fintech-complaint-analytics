@@ -15,31 +15,14 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
+from utils import PRODUCT_MAP, clean_narrative_text
 
 # ---------------------------------------------------------------------------
-# 1. CONFIG
+# CONFIG
 # ---------------------------------------------------------------------------
 RAW_DATA_PATH = "data/raw/complaints.csv"
 OUTPUT_PATH = "data/filtered_complaints.csv"
-CHUNK_SIZE = (
-    200_000  # rows per chunk; lower this (e.g. 50_000) if you still hit memory errors
-)
-
-# CFPB's raw "Product" field uses many overlapping/renamed labels over the
-# years. We map each raw label onto one of our four clean target categories.
-PRODUCT_MAP = {
-    "Credit card": "Credit Card",
-    "Credit card or prepaid card": "Credit Card",
-    "Payday loan, title loan, or personal loan": "Personal Loan",
-    "Payday loan, title loan, personal loan, or advance loan": "Personal Loan",
-    "Payday loan": "Personal Loan",
-    "Consumer Loan": "Personal Loan",
-    "Checking or savings account": "Savings Account",
-    "Bank account or service": "Savings Account",
-    "Money transfer, virtual currency, or money service": "Money Transfer",
-    "Money transfers": "Money Transfer",
-    "Virtual currency": "Money Transfer",
-}
+CHUNK_SIZE = 200_000  # rows per chunk; lower this (e.g. 50_000) if you still hit memory errors
 
 NARRATIVE_COL = "Consumer complaint narrative"
 PRODUCT_COL = "Product"
@@ -55,23 +38,6 @@ USE_COLS = [
     "State",
     NARRATIVE_COL,
 ]
-
-BOILERPLATE_PATTERNS = [
-    r"i am writing to file a complaint",
-    r"this is in regards to",
-    r"to whom it may concern",
-    r"i am writing this complaint",
-]
-
-
-def clean_text(text: str) -> str:
-    text = text.lower()
-    for pattern in BOILERPLATE_PATTERNS:
-        text = re.sub(pattern, "", text)
-    text = re.sub(r"[^a-z0-9\s.,!?']", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
 
 def main():
     print(f"Reading {RAW_DATA_PATH} in chunks of {CHUNK_SIZE:,} rows...")
@@ -95,9 +61,7 @@ def main():
 
         raw_product_counts.update(chunk[PRODUCT_COL].dropna().tolist())
 
-        has_narrative = chunk[NARRATIVE_COL].notna() & (
-            chunk[NARRATIVE_COL].str.strip() != ""
-        )
+        has_narrative = chunk[NARRATIVE_COL].notna() & (chunk[NARRATIVE_COL].str.strip() != "")
         rows_with_narrative += has_narrative.sum()
         rows_without_narrative += (~has_narrative).sum()
 
@@ -112,14 +76,12 @@ def main():
         matched = chunk.loc[keep].copy()
 
         if len(matched):
-            matched["cleaned_narrative"] = matched[NARRATIVE_COL].apply(clean_text)
+            matched["cleaned_narrative"] = matched[NARRATIVE_COL].apply(clean_narrative_text)
             filtered_chunks.append(matched)
 
-        print(
-            f"  chunk {i}: {len(chunk):,} rows read, "
-            f"{len(matched):,} matched target categories so far this chunk "
-            f"(running total kept: {sum(len(c) for c in filtered_chunks):,})"
-        )
+        print(f"  chunk {i}: {len(chunk):,} rows read, "
+              f"{len(matched):,} matched target categories so far this chunk "
+              f"(running total kept: {sum(len(c) for c in filtered_chunks):,})")
 
     # ------------------------------------------------------------------
     # EDA summary
@@ -153,9 +115,8 @@ def main():
     print(df_final["product_category"].value_counts())
 
     df_final.to_csv(OUTPUT_PATH, index=False)
-    print(
-        f"\nSaved cleaned & filtered dataset to {OUTPUT_PATH} ({len(df_final):,} rows)."
-    )
+    print(f"\nSaved cleaned & filtered dataset to {OUTPUT_PATH} "
+          f"({len(df_final):,} rows).")
 
 
 if __name__ == "__main__":
