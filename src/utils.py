@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 @dataclass(frozen=True)
 class RAGConfig:
     """Central, typed configuration for the RAG pipeline."""
+
     vector_store_dir: str = "vector_store"
     collection_name: str = "complaint_chunks"
     embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
@@ -47,15 +48,12 @@ EVAL_SNIPPET_LENGTH_CHARS: int = 200
 PRODUCT_MAP: dict[str, str] = {
     "Credit card": "Credit Card",
     "Credit card or prepaid card": "Credit Card",
-
     "Payday loan, title loan, or personal loan": "Personal Loan",
     "Payday loan, title loan, personal loan, or advance loan": "Personal Loan",
     "Payday loan": "Personal Loan",
     "Consumer Loan": "Personal Loan",
-
     "Checking or savings account": "Savings Account",
     "Bank account or service": "Savings Account",
-
     "Money transfer, virtual currency, or money service": "Money Transfer",
     "Money transfers": "Money Transfer",
     "Virtual currency": "Money Transfer",
@@ -121,7 +119,7 @@ def detect_question_category(question: str) -> str | None:
 # ---------------------------------------------------------------------------
 _ARTIFACT_PATTERNS: tuple[re.Pattern, ...] = (
     re.compile(r"excerpt\s*\d+\s*:", re.IGNORECASE),
-    re.compile(r"^answer\s*\d*\s*:", re.IGNORECASE),
+    re.compile(r"answer\s*\d+\s*:", re.IGNORECASE),
     re.compile(r"^answer\s*:\s*", re.IGNORECASE),
     re.compile(r"question\s*\d*\s*:", re.IGNORECASE),
 )
@@ -147,17 +145,44 @@ def postprocess_answer(answer: str, question: str | None = None) -> str:
 # ---------------------------------------------------------------------------
 # EXTRACTIVE FALLBACK SCORING (Task 3)
 # ---------------------------------------------------------------------------
-STOPWORDS: frozenset[str] = frozenset({
-    "the", "a", "an", "is", "are", "do", "does", "why", "what", "how",
-    "with", "about", "of", "to", "in", "on", "for", "and", "or", "it",
-    "this", "that", "people", "customers", "unhappy", "report", "issues",
-})
+STOPWORDS: frozenset[str] = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "do",
+        "does",
+        "why",
+        "what",
+        "how",
+        "with",
+        "about",
+        "of",
+        "to",
+        "in",
+        "on",
+        "for",
+        "and",
+        "or",
+        "it",
+        "this",
+        "that",
+        "people",
+        "customers",
+        "unhappy",
+        "report",
+        "issues",
+    }
+)
 
 
 def extract_keywords(question: str, stopwords: frozenset[str] = STOPWORDS) -> set[str]:
     """Extract meaningful keywords from a question for relevance scoring."""
     return {
-        w for w in re.findall(r"[a-z']+", question.lower())
+        w
+        for w in re.findall(r"[a-z']+", question.lower())
         if w not in stopwords and len(w) > MIN_KEYWORD_LENGTH_CHARS
     }
 
